@@ -1,5 +1,10 @@
 from django.shortcuts import render
-from django.http import  HttpResponse
+from django.http import HttpResponse
+
+from hostinfo.models import Server
+from hostinfo.utils import get_active_hosts, is_ssh_up, login_ssh_key
+from CMDB.settings import commands
+
 # Create your views here.
 """
 需求:
@@ -10,11 +15,55 @@ from django.http import  HttpResponse
     POST方法;
 """
 
+
 def hostscan(request):
-    print(request.method)
+    # print(request.method)
     if request.method == 'POST':
         # how to get form post data
-        print(request.POST)
-        return  HttpResponse("Upload scan host")
-    return  render(request, 'hostinfo/hostscan.html')
+        # {'scanhosts': '172.25.254.250,172.25.254.0/24'}
+        # print(request.POST)
+        """
+        # 1. Get Dictionary key
+        request.POST.get('scanhosts')
+  
+        # 2. split ip and network
+        request.POST.get('scanhosts')[0].split(',')
+        **
+        s = "172.25.254.250,172.25.34.0/24"
+        s.split(',')
+        Out[3]: ['172.25.254.250', '172.25.34.0/24']
+        """
+        # ['172.25.254.250', '172.25.34.0/24']
+        scanhosts = request.POST.get('scanhosts').split(',')
+        servers = []
 
+        for scanhost in scanhosts:
+            print("正在扫描%s......" % (scanhost))
+            # 获取所有可以ping通的主机IP
+            active_hosts = get_active_hosts(scanhost)
+            for host in active_hosts:
+                if is_ssh_up(host):
+                    # Instance Server(ORM)===> MySQL
+                    # If ip exists ,How to manage?
+                    server = Server()
+                    server.IP = host
+                    """
+                    commands = {
+                    'hostname': 'hostname',
+                    'os_type': 'uname',
+                    'os_distribution': 'dmidecode -s system-manufacturer',
+                    'os_release': 'cat /etc/redhat-release',
+                    'MAC': 'cat /sys/class/net/`[^vtlsb]`*/address',
+                }
+                    """
+                    for command_name, command in commands.items():
+                        # command_name="os_type", command="uname"
+                        result = login_ssh_key(hostname=host, command=command)
+                        # set server object attribute
+                        setattr(server, command_name, result)
+                    # save to mysql
+                    server.save()
+                    # Now Scan host info
+                    servers.append(server)
+        return render(request, "hostinfo/hostscan.html", {'servers': servers})
+    return render(request, 'hostinfo/hostscan.html')

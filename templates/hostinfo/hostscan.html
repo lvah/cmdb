@@ -30,8 +30,29 @@
                 <input type="text" name="scanhosts"
                        width="800px"
                        placeholder="eg:172.25.254.0/24,192.168.0.0/24">
-                <input type="button" value="submit">
+                <input type="submit" value="submit">
             </form>
+
+            <br/>
+            {% if servers %}
+                <table class="table table-striped table-hover">
+                    <tr>
+                        <td>ID</td>
+                        <td>IP</td>
+                        <td>hostname</td>
+                        <td>os_distribution</td>
+                    </tr>
+                    {% for server in servers %}
+                        <tr>
+                            <td>{{ server.id }}</td>
+                            <td>{{ server.IP }}</td>
+                            <td>{{ server.hostname }}</td>
+                            <td>{{ server.os_distribution }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+
         </div>
     </div>
 </div>

@@ -33,7 +33,7 @@ def is_ssh_up(host='172.25.254.250', port=22, timeout=5):
 
 
 def login_ssh_key(hostname='172.25.254.250', port=22, username='root',
-                  private_key='./id_rsa', command='df -h'):
+                  private_key='doc/id_rsa', command='df -h'):
     # 0. Read private key file
     pkey = paramiko.RSAKey.from_private_key_file(private_key)
     # 1. Instance a Object
